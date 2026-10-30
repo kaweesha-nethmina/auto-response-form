@@ -1,4 +1,5 @@
 """Strict prefill parsing; no guessing of respondent answers."""
+import random
 import re
 from urllib.parse import urlsplit, parse_qs, urlencode
 
@@ -38,6 +39,8 @@ def validate_rows(rows):
         if not re.fullmatch(r'entry\.\d+(?:_(?:year|month|day|hour|minute))?', key) or key in seen:
             raise ValueError('Entry IDs must be valid and unique.')
         seen.add(key)
+        if row.get('mode', 'fixed') not in ('fixed', 'random'):
+            raise ValueError('Invalid answer mode.')
         if not isinstance(values, list) or not values or any(not isinstance(v, str) or len(v) > 10000 for v in values):
             raise ValueError('Each field needs a list of text answers.')
     return rows
@@ -45,3 +48,8 @@ def validate_rows(rows):
 
 def build_url(target, rows):
     return form_url(target) + '?' + urlencode([(r['id'], v) for r in validate_rows(rows) for v in r['answers']])
+
+
+def pick_rows(rows, rng=random):
+    """For 'random' rows choose one answer from the pool; other rows are used as-is."""
+    return [{**r, 'answers': [rng.choice(r['answers'])]} if r.get('mode') == 'random' else r for r in rows]

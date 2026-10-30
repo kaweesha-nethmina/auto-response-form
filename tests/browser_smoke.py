@@ -80,7 +80,7 @@ def main():
                 logs.append((s, completed))
             try:
                 with patch.object(runner, 'sync_playwright', fake_playwright):
-                    result = runner.run_browser(build_url(URL, [{'id':'entry.123','answers':['Maps']}]), 1, True, 'Your response has been recorded.', log, threading.Event())
+                    result = runner.run_browser([build_url(URL, [{'id':'entry.123','answers':['Maps']}])], True, 'Your response has been recorded.', log, threading.Event())
                 assert expected == 'finished' and result == 'finished'
                 assert sum(done for _, done in logs) == 1
             except RuntimeError as e:

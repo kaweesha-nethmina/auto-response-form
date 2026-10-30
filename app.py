@@ -6,7 +6,7 @@ import threading
 from datetime import datetime, timezone
 from functools import wraps
 from flask import Flask, jsonify, request, send_from_directory, session, Response
-from core import form_url, parse_prefill, validate_rows, build_url
+from core import form_url, parse_prefill, validate_rows, build_url, pick_rows
 
 env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
 if os.path.exists(env_file):
@@ -101,10 +101,10 @@ def log(message, completed=False):
             state['completed'] += 1
 
 
-def work(url, count, submit, confirmation):
+def work(urls, submit, confirmation):
     try:
         from runner import run_browser
-        result = run_browser(url, count, submit, confirmation, log, cancel)
+        result = run_browser(urls, submit, confirmation, log, cancel)
         with lock:
             state['status'] = result
     except Exception as e:
@@ -121,7 +121,7 @@ def start():
         return jsonify(error='Expected a JSON object.'), 400
     try:
         rows = validate_rows(d.get('rows'))
-        url = build_url(d.get('url'), rows)
+        build_url(d.get('url'), rows)
         # Recheck prefilled form identity even after answer edits.
         parse_prefill(d.get('prefill'), d.get('url'))
         count = d.get('count', 1)
@@ -132,6 +132,7 @@ def start():
         mode = d.get('mode')
         if mode not in ('preview', 'submit'):
             raise ValueError('Select preview or submit.')
+        urls = [build_url(d.get('url'), pick_rows(rows)) for _ in range(count if mode == 'submit' else 1)]
         confirmation = d.get('confirmation', '').strip()
         if not 5 <= len(confirmation) <= 200:
             raise ValueError('Enter the exact confirmation message (5–200 characters).')
@@ -142,7 +143,7 @@ def start():
             return jsonify(error='A job is already running.'), 409
         state.update(status='running', completed=0, total=count if mode == 'submit' else 1, logs=[])
         cancel.clear()
-        threading.Thread(target=work, args=(url, state['total'], mode == 'submit', confirmation), daemon=True).start()
+        threading.Thread(target=work, args=(urls, mode == 'submit', confirmation), daemon=True).start()
     return jsonify(ok=True)
 
 

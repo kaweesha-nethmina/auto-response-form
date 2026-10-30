@@ -13,15 +13,15 @@ if($('password')) $('password').onkeydown=e=>{if(e.key==='Enter') $('login').cli
 bind('logout',async()=>{await api('/logout',{});location.reload();});
 function makeRow(row={id:'entry.', label:'', answers:['']}) {
   const el = document.createElement('div');el.className='entry';
-  el.innerHTML='<div class="entry-head"><input class="entry-id" aria-label="Entry ID"><button class="quiet remove">Remove</button></div><label>Question label<input class="question" placeholder="Type the question here"></label><label>Answer format<select class="kind"><option value="text">One answer / text paragraph</option><option value="multi">Checkboxes — one selected option per line</option></select></label><label>Answer(s)<textarea class="answer" rows="3"></textarea></label>';
+  el.innerHTML='<div class="entry-head"><input class="entry-id" aria-label="Entry ID"><button class="quiet remove">Remove</button></div><label>Question label<input class="question" placeholder="Type the question here"></label><label>Answer format<select class="kind"><option value="text">One answer / text paragraph</option><option value="multi">Checkboxes — one selected option per line</option><option value="random">Vary per response — one option per line, picked at random</option></select></label><label>Answer(s)<textarea class="answer" rows="3"></textarea></label>';
   el.querySelector('.entry-id').value=row.id;
   el.querySelector('.question').value=row.label || '';
-  el.querySelector('.kind').value=row.answers.length>1?'multi':'text';
+  el.querySelector('.kind').value=row.mode==='random'?'random':row.answers.length>1?'multi':'text';
   el.querySelector('.answer').value=row.answers.join('\n');
   el.querySelector('.remove').onclick=()=>el.remove();
   $('rows').querySelector('.empty')?.remove();$('rows').append(el);
 }
-function rows(){return [...document.querySelectorAll('.entry')].map(el=>({id:el.querySelector('.entry-id').value.trim(),label:el.querySelector('.question').value,answers:el.querySelector('.kind').value==='multi'?el.querySelector('.answer').value.split('\n').filter(s=>s.length):[el.querySelector('.answer').value]}));}
+function rows(){return [...document.querySelectorAll('.entry')].map(el=>({id:el.querySelector('.entry-id').value.trim(),label:el.querySelector('.question').value,mode:el.querySelector('.kind').value==='random'?'random':'fixed',answers:el.querySelector('.kind').value!=='text'?el.querySelector('.answer').value.split('\n').filter(s=>s.length):[el.querySelector('.answer').value]}));}
 function config(){return {version:1,url:$('url').value,prefill:$('prefill').value,notes:$('notes').value,rows:rows(),count:Number($('count').value),confirmation:$('confirmation').value};}
 bind('import',async()=>{const d=await api('/api/import',{url:$('url').value,prefill:$('prefill').value});$('rows').replaceChildren();d.rows.forEach(makeRow);message(`Imported ${d.rows.length} fields. Add labels and verify every answer against your form.`);});
 bind('add',()=>makeRow());

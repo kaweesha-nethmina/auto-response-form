@@ -1,7 +1,7 @@
 import os
 import unittest
 from unittest.mock import patch
-from core import parse_prefill, build_url, form_url
+from core import parse_prefill, build_url, form_url, pick_rows
 from app import app, state
 
 URL = 'https://docs.google.com/forms/d/e/example123/viewform'
@@ -20,6 +20,12 @@ class CoreTests(unittest.TestCase):
                     'https://docs.google.com/forms/d/e/x/edit']:
             with self.assertRaises(ValueError):
                 form_url(url)
+
+    def test_random_rows_pick_one_and_vary(self):
+        rows = [{'id': 'entry.1', 'mode': 'random', 'answers': ['a', 'b', 'c']}, {'id': 'entry.2', 'answers': ['x', 'y']}]
+        picks = [pick_rows(rows) for _ in range(50)]
+        self.assertTrue(all(len(p[0]['answers']) == 1 and p[1]['answers'] == ['x', 'y'] for p in picks))
+        self.assertGreater(len({p[0]['answers'][0] for p in picks}), 1)
 
     def test_mismatched_forms(self):
         with self.assertRaises(ValueError):

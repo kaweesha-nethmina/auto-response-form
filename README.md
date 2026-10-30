@@ -4,7 +4,7 @@ A Python web app that replaces repeated terminal commands with a password-protec
 
 ## Important scope
 
-Automated submissions are for disposable forms you own. The runner verifies that the respondent-visible title contains **TEST ONLY** before proceeding. Keep generated test records separate from real participant responses. This app does not generate fictional academic participants or randomize their answers. Count repeats the answer set displayed in the editor. For a different answer set, edit or load another configuration and start a new batch.
+Automated submissions are for disposable forms you own. The runner verifies that the respondent-visible title contains **TEST ONLY** before proceeding. Keep generated test records separate from real participant responses. The app does not invent answers. By default, Count repeats the answer set displayed in the editor. For test data that varies, choose **Vary per response** on a question and list the options you want (one per line); each response picks one of them. This still only runs on a TEST ONLY copy, and its responses are test data, not customer feedback. For a different answer set, edit or load another configuration and start a new batch.
 
 The attachment used to build this project contained requirements and links, not Python source. This is a fresh implementation. No submission to the supplied academic questionnaire was made during development.
 

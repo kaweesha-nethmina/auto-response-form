@@ -3,11 +3,12 @@ from urllib.parse import urlsplit
 from playwright.sync_api import sync_playwright
 
 
-def run_browser(url, count, submit, confirmation, log, cancelled):
+def run_browser(urls, submit, confirmation, log, cancelled):
     """One browser, a fresh context for each response; never retry a submission."""
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=['--disable-dev-shm-usage'])
         try:
+            count = len(urls)
             for number in range(1, count + 1):
                 if cancelled.is_set():
                     return 'cancelled'
@@ -15,7 +16,7 @@ def run_browser(url, count, submit, confirmation, log, cancelled):
                 try:
                     page = context.new_page()
                     page.set_default_timeout(15000)
-                    page.goto(url, wait_until='domcontentloaded', timeout=45000)
+                    page.goto(urls[number - 1], wait_until='domcontentloaded', timeout=45000)
                     if urlsplit(page.url).hostname != 'docs.google.com':
                         raise RuntimeError('Form redirected away from Google Forms. Sign-in forms are unsupported.')
                     heading = page.get_by_role('heading', level=1).first
