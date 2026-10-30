@@ -2,13 +2,46 @@ const $ = id => document.getElementById(id);
 let csrf = '', signedIn = false;
 function message(text) { $('message').textContent = text; $('message').hidden = !text; }
 const tabs = ['connect','answers','run'];
+let currentTab = 'connect';
 function show(tab) {
+  currentTab = tab; save();
   document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== tab);
   document.querySelectorAll('#side a').forEach(a => a.classList.toggle('on', a.dataset.tab === tab));
   $('crumb').textContent = {connect:'Connect form',answers:'Answers',run:'Run & progress'}[tab];
   try { history.replaceState(null, '', '#' + tab); } catch(e) {}
 }
 document.querySelectorAll('#side a').forEach(a => a.onclick = e => { e.preventDefault(); show(a.dataset.tab); });
+
+const KEY = 'formdesk:v1', DEFAULT_CONFIRMATION = 'Your response has been recorded.';
+const EMPTY_ROWS = '<div class="empty">Load your pre-filled link to see the questions.</div>';
+function snapshot() {
+  return {url:$('url').value, prefill:$('prefill').value, notes:$('notes').value, count:$('count').value,
+    confirmation:$('confirmation').value, allkind:$('allkind').value, tab:currentTab,
+    done:[...document.querySelectorAll('#side a.done')].map(a => a.dataset.tab),
+    rows:(r => [...document.querySelectorAll('.entry')].map((el, i) => ({...r[i], options:JSON.parse(el.dataset.options || '[]'), type:el.dataset.type === '' ? undefined : Number(el.dataset.type)})))(rows())};
+}
+function save() { if(!signedIn) return; try { localStorage.setItem(KEY, JSON.stringify(snapshot())); } catch(e) {} }
+function updateCount() { $('rowcount').textContent = document.querySelectorAll('.entry').length || ''; }
+function restore() {
+  let s; try { s = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch(e) {}
+  if(!s || typeof s !== 'object') return null;
+  for(const k of ['url','prefill','notes','count','confirmation','allkind']) if(typeof s[k] === 'string') $(k).value = s[k];
+  if(Array.isArray(s.rows) && s.rows.length) { $('rows').replaceChildren(); s.rows.forEach(makeRow); }
+  (s.done || []).forEach(t => document.querySelector(`[data-tab=${t}]`)?.classList.add('done'));
+  updateCount();
+  return s.tab;
+}
+function resetAll() {
+  if(!confirm('Clear the links, answers and settings saved in this browser?')) return;
+  try { localStorage.removeItem(KEY); } catch(e) {}
+  for(const id of ['url','prefill','notes']) $(id).value = '';
+  $('count').value = 1; $('confirmation').value = DEFAULT_CONFIRMATION; $('allkind').value = 'text'; $('owned').checked = false;
+  $('rows').innerHTML = EMPTY_ROWS;
+  document.querySelectorAll('#side a.done').forEach(a => a.classList.remove('done'));
+  updateCount(); message(''); show('connect');
+}
+['input','change'].forEach(ev => document.addEventListener(ev, e => { if(e.target.closest('#app-view')) save(); }));
+document.addEventListener('click', e => { if(e.target.closest('#app-view .remove')) setTimeout(() => { updateCount(); save(); }); });
 async function api(path, data) {
   const response = await fetch(path, data === undefined ? {} : {method:'POST', headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify(data)});
   const result = await response.json();
@@ -18,6 +51,7 @@ async function api(path, data) {
 function bind(id, fn) { if($(id)) $(id).onclick = async () => {try {message('');await fn();}catch(e){message(e.message);}}; }
 bind('login',async()=>{await api('/login',{password:$('password').value});location.reload();});
 if($('password')) $('password').onkeydown=e=>{if(e.key==='Enter') $('login').click();};
+bind('reset',resetAll);
 bind('logout',async()=>{await api('/logout',{});location.reload();});
 function makeRow(row={id:'entry.', label:'', answers:['']}) {
   const el = document.createElement('div');el.className='entry';
@@ -35,7 +69,7 @@ function makeRow(row={id:'entry.', label:'', answers:['']}) {
 }
 function rows(){return [...document.querySelectorAll('.entry')].map(el=>({id:el.querySelector('.entry-id').value.trim(),label:el.querySelector('.question').value,mode:['random','subset'].includes(el.querySelector('.kind').value)?el.querySelector('.kind').value:'fixed',answers:el.querySelector('.kind').value!=='text'?el.querySelector('.answer').value.split('\n').filter(s=>s.length):[el.querySelector('.answer').value]}));}
 function config(){return {version:1,url:$('url').value,prefill:$('prefill').value,notes:$('notes').value,rows:rows(),count:Number($('count').value),confirmation:$('confirmation').value};}
-bind('import',async()=>{const d=await api('/api/import',{url:$('url').value,prefill:$('prefill').value});$('rows').replaceChildren();d.rows.forEach(makeRow);applyAll();$('rowcount').textContent=d.rows.length;document.querySelector('[data-tab=connect]').classList.add('done');show('answers');message(`Loaded ${d.rows.length} questions. Check each answer against your form.`);});
+bind('import',async()=>{const d=await api('/api/import',{url:$('url').value,prefill:$('prefill').value});$('rows').replaceChildren();d.rows.forEach(makeRow);applyAll();updateCount();document.querySelector('[data-tab=connect]').classList.add('done');show('answers');message(`Loaded ${d.rows.length} questions. Check each answer against your form.`);});
 function notesOptions(){const out=[];let cur=null;for(const raw of $('notes').value.split('\n')){const line=raw.trim();if(/^\d+\.\s/.test(line)){cur=[];out.push(cur);continue;}if(!cur||!line||line.startsWith('*')||/^\d\s*=/.test(line)||line.length>120)continue;cur.push(line);}return out;}
 function applyAll(){const v=$('allkind').value;const opts=notesOptions();document.querySelectorAll('.entry').forEach((el,i)=>{const a=el.querySelector('.answer'),k=el.querySelector('.kind');const lines=()=>a.value.split('\n').filter(s=>s.length);
   if(v==='random'){const known=JSON.parse(el.dataset.options||'[]');const pool=known.length>=2?known:(opts[i]||[]);if(pool.length>=2&&lines().length<2)a.value=pool.join('\n');
@@ -44,7 +78,7 @@ function applyAll(){const v=$('allkind').value;const opts=notesOptions();documen
   k.onchange();});}
 $('allkind').onchange=applyAll;
 bind('toRun',()=>{document.querySelector('[data-tab=answers]').classList.add('done');show('run');});
-bind('add',()=>makeRow());
+bind('add',()=>{makeRow();updateCount();save();});
 bind('save',()=>{const u=URL.createObjectURL(new Blob([JSON.stringify(config(),null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=u;a.download='formdesk-config.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);});
 if($('load')) $('load').onchange=async e=>{try{const f=e.target.files[0];if(!f)return;if(f.size>2000000)throw Error('File too large.');const d=JSON.parse(await f.text());if(!Array.isArray(d.rows)||d.rows.length>300||d.rows.some(r=>!r||typeof r.id!=='string'||!Array.isArray(r.answers)||r.answers.some(a=>typeof a!=='string')))throw Error('Invalid configuration.');for(const key of ['url','prefill','notes','count','confirmation']) if(d[key]!==undefined)$(key).value=d[key];$('rows').replaceChildren();d.rows.forEach(makeRow);$('owned').checked=false;message('Configuration loaded. Review before running.');}catch(err){message(err.message);}};
 async function start(mode){
@@ -62,7 +96,8 @@ async function poll(){if(!signedIn)return;try{const d=await api('/api/status');$
   $('login-view').hidden = signedIn || !csrf;
   $('app-view').hidden = !signedIn;
   $('side').hidden = !signedIn;
-  if(signedIn) show(tabs.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'connect');
+  $('reset').hidden = !signedIn;
+  if(signedIn) { const saved = restore(); show(tabs.includes(location.hash.slice(1)) ? location.hash.slice(1) : tabs.includes(saved) ? saved : 'connect'); }
   $('logout').hidden = !signedIn;
   if(signedIn){poll();setInterval(poll,2000);}
 })();
