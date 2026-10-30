@@ -1,0 +1,24 @@
+FORMDESK — START HERE
+
+HOST ON RENDER
+1. Unzip. Upload the contents of FormDesk to a private GitHub repository.
+2. Render → New → Blueprint → connect the repository.
+3. Enter APP_PASSWORD (at least 16 characters), review the selected service plan, and deploy.
+4. Open your Render URL and sign in.
+
+USE THE APP
+1. Duplicate your Google Form and put TEST ONLY in its visible title.
+2. Paste the published responder URL and a prefilled URL from the SAME copy.
+3. Import fields; add question labels; edit answers. Put checkbox selections on separate lines.
+4. Preview. Submit 1 test and inspect it in Google Forms.
+5. Set the response count and submit your test batch.
+
+Batches repeat the shown answers. Test records must stay separate from genuine research data.
+Preview does not guarantee optional-field completeness; inspect your first submitted test.
+Save/load configurations to avoid entering everything again. No terminal commands for routine use.
+
+LOCAL WINDOWS
+Install Python 3.12, then double-click start_windows.bat.
+
+Read README.md for the full deployment guide and limitations.
+This package passed local tests. It has not been deployed to Render or tested against your live form.
