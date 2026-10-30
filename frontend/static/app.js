@@ -6,6 +6,9 @@ const tabs = ['connect','answers','run'];
 let currentTab = 'connect';
 function show(tab) {
   currentTab = tab; save();
+  const order = tabs.indexOf(tab);
+  document.querySelectorAll('#stepper span').forEach((s, i) => { s.classList.toggle('on', i === order); s.classList.toggle('past', i < order); });
+  $('stepper').hidden = !signedIn; window.scrollTo({top:0, behavior:'smooth'});
   document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== tab);
   document.querySelectorAll('#side a').forEach(a => a.classList.toggle('on', a.dataset.tab === tab));
   $('crumb').textContent = {connect:'Connect form',answers:'Answers',run:'Run & progress'}[tab];
@@ -14,7 +17,7 @@ function show(tab) {
 document.querySelectorAll('#side a').forEach(a => a.onclick = e => { e.preventDefault(); show(a.dataset.tab); });
 
 const KEY = 'formdesk:v1', DEFAULT_CONFIRMATION = 'Your response has been recorded.';
-const EMPTY_ROWS = '<div class="empty">Load your pre-filled link to see the questions.</div>';
+const EMPTY_ROWS = '<div class="empty"><div class="empty-ic">☰</div><b>No questions yet</b><span>Load your pre-filled link in step 1 to see them here.</span></div>';
 function snapshot() {
   return {url:$('url').value, prefill:$('prefill').value, notes:$('notes').value, count:$('count').value,
     confirmation:$('confirmation').value, allkind:$('allkind').value, tab:currentTab,
@@ -116,7 +119,7 @@ async function start(mode){
   if(thin&&!confirm(`${thin} question(s) are set to "Different each time" but have only one option, so they will repeat the same answer. Continue anyway?`))return;
 await api('/api/start',{...config(),mode,owned:$('owned').checked});await poll();}
 bind('preview',()=>start('preview'));bind('submit',()=>start('submit'));bind('cancel',()=>api('/api/cancel',{}));
-async function poll(){if(!signedIn)return;try{const d=await api('/api/status');$('status').textContent=d.status;$('runbadge').textContent=d.status==='running'?'●':'';$('progress').textContent=`${d.completed} / ${d.total} done`;$('bar').max=Math.max(1,d.total);$('bar').value=d.completed;$('logs').textContent=d.logs.map(l=>`${l.time.slice(11,19)}  ${l.message}`).join('\n')||'Your job events will appear here.';for(const id of ['submit','preview'])$(id).disabled=d.status==='running';$('cancel').disabled=d.status!=='running';}catch(e){message(e.message);}}
+async function poll(){if(!signedIn)return;try{const d=await api('/api/status');$('status').textContent=d.status;$('status').dataset.state=d.status;$('runbadge').textContent=d.status==='running'?'●':'';$('progress').textContent=`${d.completed} / ${d.total} done`;$('bar').max=Math.max(1,d.total);$('bar').value=d.completed;$('logs').textContent=d.logs.map(l=>`${l.time.slice(11,19)}  ${l.message}`).join('\n')||'Your job events will appear here.';for(const id of ['submit','preview'])$(id).disabled=d.status==='running';$('cancel').disabled=d.status!=='running';}catch(e){message(e.message);}}
 
 (async()=>{
   try {
