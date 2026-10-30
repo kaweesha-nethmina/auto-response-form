@@ -50,7 +50,7 @@ const GUIDE = [
   ['Rename the copy', 'Open the copy and add <b>- TEST ONLY</b> to the end of its title.<br>Example: <i>My Feedback Form - TEST ONLY</i>'],
   ['Publish it', 'Click <b>Publish</b> so anyone can respond. Turn off sign-in and "limit to 1 response".'],
   ['Copy the responder link', 'Copy the <b>responder link</b> (it ends in <code>/viewform</code>) and paste it into <b>Form link</b> below.'],
-  ['Choose the pre-filled form', 'Click the <b>3 dots (⋮)</b> in the top right again and choose <b>pre-filled form</b>.'],
+  ['Choose pre-fill form', 'Click the <b>3 dots (⋮)</b> in the top right again and choose <b>Pre-fill form</b>.'],
   ['Fill in the form', 'Fill in the form with any sample answers. Answer <b>every</b> question, then click <b>Get link</b> and copy the link.'],
   ['Load your questions', 'Paste that link into <b>Pre-filled link</b> below and click <b>Load questions</b>.']
 ];
