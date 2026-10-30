@@ -88,6 +88,7 @@ class ApiTests(unittest.TestCase):
     def test_home_and_export(self):
         self.login()
         self.assertIn(b'FormDesk', self.client.get('/').data)
+        self.assertTrue(self.client.get('/api/session').json['signed_in'])
         self.assertIn(b'UTC time,Event', self.client.get('/api/log.csv').data)
 
 

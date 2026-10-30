@@ -5,10 +5,11 @@ import secrets
 import threading
 from datetime import datetime, timezone
 from functools import wraps
-from flask import Flask, jsonify, request, render_template, session, Response
+from flask import Flask, jsonify, request, send_from_directory, session, Response
 from core import form_url, parse_prefill, validate_rows, build_url
 
-app = Flask(__name__)
+FRONTEND = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'frontend')
+app = Flask(__name__, static_folder=os.path.join(FRONTEND, 'static'), static_url_path='/static')
 app.config.update(SECRET_KEY=os.environ.get('SECRET_KEY') or secrets.token_hex(32), MAX_CONTENT_LENGTH=2 * 1024 * 1024,
                   SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE='Strict',
                   SESSION_COOKIE_SECURE=os.environ.get('RENDER') == 'true')
@@ -44,8 +45,13 @@ def health():
 
 @app.get('/')
 def home():
+    return send_from_directory(FRONTEND, 'index.html')
+
+
+@app.get('/api/session')
+def session_info():
     session.setdefault('csrf', secrets.token_hex(32))
-    return render_template('index.html', csrf=session['csrf'], signed_in=bool(session.get('auth')))
+    return jsonify(signed_in=bool(session.get('auth')), csrf=session['csrf'])
 
 
 @app.post('/login')

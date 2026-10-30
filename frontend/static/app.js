@@ -1,5 +1,5 @@
 const $ = id => document.getElementById(id);
-const csrf = document.querySelector('meta[name="csrf"]').content;
+let csrf = '', signedIn = false;
 function message(text) { $('message').textContent = text; $('message').hidden = !text; }
 async function api(path, data) {
   const response = await fetch(path, data === undefined ? {} : {method:'POST', headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify(data)});
@@ -29,5 +29,15 @@ bind('save',()=>{const u=URL.createObjectURL(new Blob([JSON.stringify(config(),n
 if($('load')) $('load').onchange=async e=>{try{const f=e.target.files[0];if(!f)return;if(f.size>2000000)throw Error('File too large.');const d=JSON.parse(await f.text());if(!Array.isArray(d.rows)||d.rows.length>300||d.rows.some(r=>!r||typeof r.id!=='string'||!Array.isArray(r.answers)||r.answers.some(a=>typeof a!=='string')))throw Error('Invalid configuration.');for(const key of ['url','prefill','notes','count','confirmation']) if(d[key]!==undefined)$(key).value=d[key];$('rows').replaceChildren();d.rows.forEach(makeRow);$('owned').checked=false;message('Configuration loaded. Review before running.');}catch(err){message(err.message);}};
 async function start(mode){await api('/api/start',{...config(),mode,owned:$('owned').checked});await poll();}
 bind('preview',()=>start('preview'));bind('submit',()=>start('submit'));bind('cancel',()=>api('/api/cancel',{}));
-async function poll(){if(!$('status'))return;try{const d=await api('/api/status');$('status').textContent=d.status;$('progress').textContent=`${d.completed} / ${d.total} confirmed`;$('bar').max=Math.max(1,d.total);$('bar').value=d.completed;$('logs').textContent=d.logs.map(l=>`${l.time.slice(11,19)}  ${l.message}`).join('\n')||'Your job events will appear here.';for(const id of ['submit','preview'])$(id).disabled=d.status==='running';$('cancel').disabled=d.status!=='running';}catch(e){message(e.message);}}
-if($('status')){poll();setInterval(poll,2000);}
+async function poll(){if(!signedIn)return;try{const d=await api('/api/status');$('status').textContent=d.status;$('progress').textContent=`${d.completed} / ${d.total} confirmed`;$('bar').max=Math.max(1,d.total);$('bar').value=d.completed;$('logs').textContent=d.logs.map(l=>`${l.time.slice(11,19)}  ${l.message}`).join('\n')||'Your job events will appear here.';for(const id of ['submit','preview'])$(id).disabled=d.status==='running';$('cancel').disabled=d.status!=='running';}catch(e){message(e.message);}}
+
+(async()=>{
+  try {
+    const s = await (await fetch('/api/session')).json();
+    csrf = s.csrf; signedIn = s.signed_in;
+  } catch(e) { message('Cannot reach the server. Try again shortly.'); }
+  $('login-view').hidden = signedIn || !csrf;
+  $('app-view').hidden = !signedIn;
+  $('logout').hidden = !signedIn;
+  if(signedIn){poll();setInterval(poll,2000);}
+})();

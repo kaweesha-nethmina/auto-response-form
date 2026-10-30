@@ -8,6 +8,15 @@ Automated submissions are for disposable forms you own. The runner verifies that
 
 The attachment used to build this project contained requirements and links, not Python source. This is a fresh implementation. No submission to the supplied academic questionnaire was made during development.
 
+## Split deploy: backend on Render, frontend on Vercel
+
+1. Deploy the backend on Render as described below (Blueprint with `render.yaml`). Note its URL, e.g. `formdesk-qa.onrender.com`.
+2. In `vercel.json`, replace every `RENDER_SERVICE_URL` with that hostname (no `https://`, no trailing slash).
+3. In Vercel, import the same repo. Framework preset: **Other**. Leave build command empty; `vercel.json` sets the output directory to `frontend`.
+4. Open the Vercel URL. The browser only talks to Vercel; `/api/*`, `/login` and `/logout` are proxied to Render, so login cookies stay same-origin and no CORS setup is needed.
+
+The Render URL also serves the full app by itself, which is handy for debugging.
+
 ## Deploy on Render
 
 1. Extract the ZIP. Create a private GitHub repository and upload the **contents of the FormDesk folder** so Dockerfile and render.yaml are at its root. Never commit your passwords, private prefilled links, or real responses.
