@@ -6,7 +6,7 @@ import threading
 from datetime import datetime, timezone
 from functools import wraps
 from flask import Flask, jsonify, request, send_from_directory, session, Response
-from core import form_url, parse_prefill, validate_rows, build_url, pick_rows
+from core import form_url, parse_prefill, validate_rows, build_url, pick_rows, fetch_questions
 
 env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
 if os.path.exists(env_file):
@@ -89,7 +89,13 @@ def import_link():
     if not isinstance(d, dict):
         return jsonify(error='Expected a JSON object.'), 400
     try:
-        return jsonify(rows=parse_prefill(d.get('prefill'), d.get('url')))
+        rows = parse_prefill(d.get('prefill'), d.get('url'))
+        info = fetch_questions(d.get('url'))
+        for r in rows:
+            q = info.get(r['id'])
+            if q:
+                r.update(label=q['label'].split('\n')[0], type=q['type'], options=q['options'])
+        return jsonify(rows=rows)
     except (ValueError, TypeError, AttributeError) as e:
         return jsonify(error=str(e)), 400
 

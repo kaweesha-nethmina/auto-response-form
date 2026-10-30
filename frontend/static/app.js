@@ -21,29 +21,34 @@ if($('password')) $('password').onkeydown=e=>{if(e.key==='Enter') $('login').cli
 bind('logout',async()=>{await api('/logout',{});location.reload();});
 function makeRow(row={id:'entry.', label:'', answers:['']}) {
   const el = document.createElement('div');el.className='entry';
-  el.innerHTML='<div class="entry-head"><input class="question" placeholder="Question (optional name for you)"><button class="quiet remove">Remove</button></div><label>How to answer<select class="kind"><option value="text">Same answer every time</option><option value="random">Different each time (random pick from list)</option><option value="multi">Several selected together (checkboxes)</option></select></label><label><span class="hint-label">Answer</span><textarea class="answer" rows="2"></textarea></label><small class="hint kind-hint"></small><label class="idrow">Entry ID<input class="entry-id" aria-label="Entry ID"></label>';
+  el.innerHTML='<div class="entry-head"><input class="question" placeholder="Question (optional name for you)"><button class="quiet remove">Remove</button></div><label>How to answer<select class="kind"><option value="text">Same answer every time</option><option value="random">Different each time (random pick from list)</option><option value="subset">Random few ticked (checkboxes)</option><option value="multi">Several selected together (checkboxes)</option></select></label><label><span class="hint-label">Answer</span><textarea class="answer" rows="2"></textarea></label><small class="hint kind-hint"></small><label class="idrow">Entry ID<input class="entry-id" aria-label="Entry ID"></label>';
+  el.dataset.options=JSON.stringify(row.options||[]);el.dataset.type=row.type===undefined?'':row.type;
   el.querySelector('.entry-id').value=row.id;
   el.querySelector('.question').value=row.label || '';
-  el.querySelector('.kind').value=row.mode==='random'?'random':row.answers.length>1?'multi':'text';
+  el.querySelector('.kind').value=row.mode==='random'||row.mode==='subset'?row.mode:row.answers.length>1?'multi':'text';
   el.querySelector('.answer').value=row.answers.join('\n');
   const kind=el.querySelector('.kind'),hint=el.querySelector('.kind-hint');
-  const note=()=>{hint.textContent={text:'Type one answer.',random:'One option per line. Each response picks one at random.',multi:'One option per line. All of them are ticked in every response.'}[kind.value];};
+  const note=()=>{hint.textContent={text:'Type one answer.',random:'One option per line. Each response picks one at random.',subset:'One option per line. Each response ticks 1–3 of them at random.',multi:'One option per line. All of them are ticked in every response.'}[kind.value];};
   kind.onchange=note;note();
   el.querySelector('.remove').onclick=()=>el.remove();
   $('rows').querySelector('.empty')?.remove();$('rows').append(el);
 }
-function rows(){return [...document.querySelectorAll('.entry')].map(el=>({id:el.querySelector('.entry-id').value.trim(),label:el.querySelector('.question').value,mode:el.querySelector('.kind').value==='random'?'random':'fixed',answers:el.querySelector('.kind').value!=='text'?el.querySelector('.answer').value.split('\n').filter(s=>s.length):[el.querySelector('.answer').value]}));}
+function rows(){return [...document.querySelectorAll('.entry')].map(el=>({id:el.querySelector('.entry-id').value.trim(),label:el.querySelector('.question').value,mode:['random','subset'].includes(el.querySelector('.kind').value)?el.querySelector('.kind').value:'fixed',answers:el.querySelector('.kind').value!=='text'?el.querySelector('.answer').value.split('\n').filter(s=>s.length):[el.querySelector('.answer').value]}));}
 function config(){return {version:1,url:$('url').value,prefill:$('prefill').value,notes:$('notes').value,rows:rows(),count:Number($('count').value),confirmation:$('confirmation').value};}
 bind('import',async()=>{const d=await api('/api/import',{url:$('url').value,prefill:$('prefill').value});$('rows').replaceChildren();d.rows.forEach(makeRow);applyAll();$('rowcount').textContent=d.rows.length;document.querySelector('[data-tab=connect]').classList.add('done');show('answers');message(`Loaded ${d.rows.length} questions. Check each answer against your form.`);});
 function notesOptions(){const out=[];let cur=null;for(const raw of $('notes').value.split('\n')){const line=raw.trim();if(/^\d+\.\s/.test(line)){cur=[];out.push(cur);continue;}if(!cur||!line||line.startsWith('*')||/^\d\s*=/.test(line)||line.length>120)continue;cur.push(line);}return out;}
-function applyAll(){const v=$('allkind').value;const opts=notesOptions();document.querySelectorAll('.entry').forEach((el,i)=>{const a=el.querySelector('.answer');if(v==='random'&&opts[i]&&opts[i].length>=2&&a.value.split('\n').filter(s=>s.length).length<2)a.value=opts[i].join('\n');const k=el.querySelector('.kind');const lines=el.querySelector('.answer').value.split('\n').filter(s=>s.length).length;k.value=v==='random'?'random':(lines>1?'multi':'text');k.onchange();});}
+function applyAll(){const v=$('allkind').value;const opts=notesOptions();document.querySelectorAll('.entry').forEach((el,i)=>{const a=el.querySelector('.answer'),k=el.querySelector('.kind');const lines=()=>a.value.split('\n').filter(s=>s.length);
+  if(v==='random'){const known=JSON.parse(el.dataset.options||'[]');const pool=known.length>=2?known:(opts[i]||[]);if(pool.length>=2&&lines().length<2)a.value=pool.join('\n');
+    k.value=lines().length<2?'text':(el.dataset.type==='4'?'subset':'random');}
+  else k.value=lines().length>1?'multi':'text';
+  k.onchange();});}
 $('allkind').onchange=applyAll;
 bind('toRun',()=>{document.querySelector('[data-tab=answers]').classList.add('done');show('run');});
 bind('add',()=>makeRow());
 bind('save',()=>{const u=URL.createObjectURL(new Blob([JSON.stringify(config(),null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=u;a.download='formdesk-config.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);});
 if($('load')) $('load').onchange=async e=>{try{const f=e.target.files[0];if(!f)return;if(f.size>2000000)throw Error('File too large.');const d=JSON.parse(await f.text());if(!Array.isArray(d.rows)||d.rows.length>300||d.rows.some(r=>!r||typeof r.id!=='string'||!Array.isArray(r.answers)||r.answers.some(a=>typeof a!=='string')))throw Error('Invalid configuration.');for(const key of ['url','prefill','notes','count','confirmation']) if(d[key]!==undefined)$(key).value=d[key];$('rows').replaceChildren();d.rows.forEach(makeRow);$('owned').checked=false;message('Configuration loaded. Review before running.');}catch(err){message(err.message);}};
 async function start(mode){
-  const thin=rows().filter(r=>r.mode==='random'&&r.answers.length<2).length;
+  const thin=rows().filter(r=>(r.mode==='random'||r.mode==='subset')&&r.answers.length<2).length;
   if(thin&&!confirm(`${thin} question(s) are set to "Different each time" but have only one option, so they will repeat the same answer. Continue anyway?`))return;
 await api('/api/start',{...config(),mode,owned:$('owned').checked});await poll();}
 bind('preview',()=>start('preview'));bind('submit',()=>start('submit'));bind('cancel',()=>api('/api/cancel',{}));

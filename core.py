@@ -1,6 +1,8 @@
 """Strict prefill parsing; no guessing of respondent answers."""
+import json
 import random
 import re
+import urllib.request
 from urllib.parse import urlsplit, parse_qs, urlencode
 
 
@@ -39,7 +41,7 @@ def validate_rows(rows):
         if not re.fullmatch(r'entry\.\d+(?:_(?:year|month|day|hour|minute))?', key) or key in seen:
             raise ValueError('Entry IDs must be valid and unique.')
         seen.add(key)
-        if row.get('mode', 'fixed') not in ('fixed', 'random'):
+        if row.get('mode', 'fixed') not in ('fixed', 'random', 'subset'):
             raise ValueError('Invalid answer mode.')
         if not isinstance(values, list) or not values or any(not isinstance(v, str) or len(v) > 10000 for v in values):
             raise ValueError('Each field needs a list of text answers.')
@@ -52,4 +54,34 @@ def build_url(target, rows):
 
 def pick_rows(rows, rng=random):
     """For 'random' rows choose one answer from the pool; other rows are used as-is."""
-    return [{**r, 'answers': [rng.choice(r['answers'])]} if r.get('mode') == 'random' else r for r in rows]
+    out = []
+    for r in rows:
+        if r.get('mode') == 'random':
+            r = {**r, 'answers': [rng.choice(r['answers'])]}
+        elif r.get('mode') == 'subset':
+            r = {**r, 'answers': rng.sample(r['answers'], rng.randint(1, min(3, len(r['answers']))))}
+        out.append(r)
+    return out
+
+
+class _SameHost(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if urlsplit(newurl).hostname != 'docs.google.com':
+            raise ValueError('Form redirected away from Google Forms.')
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+def fetch_questions(target):
+    """Read question titles, types and choice options from the public form page; {} on any failure."""
+    try:
+        req = urllib.request.Request(form_url(target), headers={'User-Agent': 'Mozilla/5.0', 'Accept-Language': 'en-US,en;q=0.9'})
+        html = urllib.request.build_opener(_SameHost).open(req, timeout=15).read(3_000_000).decode('utf-8', 'replace')
+        data = json.loads(re.search(r'FB_PUBLIC_LOAD_DATA_\s*=\s*(\[.*?\]);\s*</script>', html, re.S).group(1))
+        found = {}
+        for item in data[1][1]:
+            for part in (item[4] or []) if len(item) > 4 else []:
+                options = [o[0] for o in (part[1] or []) if o and o[0]]
+                found['entry.%d' % part[0]] = {'label': item[1], 'type': item[3], 'options': options}
+        return found
+    except Exception:
+        return {}

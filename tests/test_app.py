@@ -27,6 +27,11 @@ class CoreTests(unittest.TestCase):
         self.assertTrue(all(len(p[0]['answers']) == 1 and p[1]['answers'] == ['x', 'y'] for p in picks))
         self.assertGreater(len({p[0]['answers'][0] for p in picks}), 1)
 
+    def test_subset_rows_pick_one_to_three(self):
+        rows = [{'id': 'entry.1', 'mode': 'subset', 'answers': ['a', 'b', 'c', 'd', 'e']}]
+        sizes = {len(pick_rows(rows)[0]['answers']) for _ in range(100)}
+        self.assertTrue(sizes <= {1, 2, 3} and len(sizes) > 1)
+
     def test_mismatched_forms(self):
         with self.assertRaises(ValueError):
             parse_prefill(PREFILL, URL.replace('example123', 'other'))
@@ -71,11 +76,13 @@ class ApiTests(unittest.TestCase):
         self.login()
         self.assertEqual(self.client.post('/api/cancel', json={}).status_code, 403)
 
-    def test_import(self):
+    @patch('app.fetch_questions', return_value={'entry.123': {'label': '1. Q', 'type': 4, 'options': ['First', 'Second', 'Third']}})
+    def test_import(self, _fetch):
         h = self.login()
         r = self.client.post('/api/import', headers=h, json={'url': URL, 'prefill': PREFILL})
         self.assertEqual(r.status_code, 200)
         self.assertEqual(len(r.json['rows']), 2)
+        self.assertEqual(r.json['rows'][0]['options'], ['First', 'Second', 'Third'])
 
     def test_invalid_counts_and_owner(self):
         h = self.login()
