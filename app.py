@@ -8,6 +8,13 @@ from functools import wraps
 from flask import Flask, jsonify, request, send_from_directory, session, Response
 from core import form_url, parse_prefill, validate_rows, build_url
 
+env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+if os.path.exists(env_file):
+    for line in open(env_file):
+        key, sep, value = line.strip().partition('=')
+        if sep and not key.startswith('#'):
+            os.environ.setdefault(key.strip(), value.strip().strip('"\''))
+
 FRONTEND = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'frontend')
 app = Flask(__name__, static_folder=os.path.join(FRONTEND, 'static'), static_url_path='/static')
 app.config.update(SECRET_KEY=os.environ.get('SECRET_KEY') or secrets.token_hex(32), MAX_CONTENT_LENGTH=2 * 1024 * 1024,
