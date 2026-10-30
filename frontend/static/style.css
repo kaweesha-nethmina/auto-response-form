@@ -67,3 +67,4 @@ label.inline select{width:100%}
 }
 footer{border-top:1px solid var(--line);padding-top:18px}footer p{margin:2px 0}footer a{color:var(--gold-d);font-weight:600;text-decoration:none}footer a:hover{text-decoration:underline}
 @media(max-width:700px){footer{padding-bottom:12px}}
+.steps{list-style:none;counter-reset:s;margin:14px 0 4px;padding:0;display:grid;gap:8px}.steps li{counter-increment:s;position:relative;padding:10px 12px 10px 48px;background:var(--gold-soft);border:1px solid #efe5bd;border-radius:10px;font-size:14px}.steps li::before{content:counter(s);position:absolute;left:12px;top:10px;width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--gold);font-weight:700;font-size:12px;display:grid;place-items:center}.steps code{background:#fff;border:1px solid var(--line);border-radius:4px;padding:0 4px;font-size:12px}

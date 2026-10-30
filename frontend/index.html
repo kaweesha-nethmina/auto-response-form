@@ -11,7 +11,17 @@
 <div id="message" role="alert" hidden></div>
 <section id="login-view" class="panel login" hidden><h1>Sign in</h1><label>Password<input id="password" type="password" autocomplete="current-password"></label><button id="login">Sign in</button></section>
 <div id="app-view" hidden>
-<section class="panel" data-panel="connect"><h1>Connect your form</h1><p class="lead">Use a copy of your form with <strong>TEST ONLY</strong> in its title.</p>
+<section class="panel" data-panel="connect"><h1>Connect your form</h1><p class="lead">Use a copy of your form with <strong>TEST ONLY</strong> in its title. Follow these steps once:</p>
+<ol class="steps">
+<li><b>Open your form</b> in Google Forms (the editor, not the live form).</li>
+<li>Click the <b>3 dots (⋮)</b> in the top right corner and choose <b>Make a copy</b>.</li>
+<li>Open the copy and add <b>- TEST ONLY</b> to the end of its title, for example <i>My Feedback Form - TEST ONLY</i>.</li>
+<li>Click <b>Publish</b> so anyone can respond. Turn off sign-in and "limit to 1 response".</li>
+<li>Copy the <b>responder link</b> (it ends in <code>/viewform</code>) and paste it into <b>Form link</b> below.</li>
+<li>Click the <b>3 dots (⋮)</b> in the top right again and choose <b>Get pre-filled link</b>.</li>
+<li><b>Fill in the form</b> with any sample answers, answering every question, then click <b>Get link</b> and copy it.</li>
+<li>Paste that link into <b>Pre-filled link</b> below and click <b>Load questions</b>.</li>
+</ol>
 <label>Form link<input id="url" type="url" placeholder="https://docs.google.com/forms/d/e/…/viewform"></label>
 <label>Pre-filled link<textarea id="prefill" rows="3" placeholder="In Google Forms: ⋮ → Get pre-filled link. Answer every question, then paste the link here."></textarea></label>
 <details><summary>Paste questionnaire (optional, auto-fills answer options)</summary><label>Notes<textarea id="notes" rows="6" placeholder="Paste the questions and their options. Used only in this page."></textarea></label></details>
