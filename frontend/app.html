@@ -1,0 +1,38 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FormDesk · Test workspace</title><link rel="icon" type="image/svg+xml" href="/static/logo.svg"><link rel="apple-touch-icon" href="/static/logo.svg"><meta name="theme-color" content="#121212"><link rel="stylesheet" href="/static/style.css"></head><body>
+<header class="bar"><b class="brand"><img src="/static/logo.svg" alt="" width="30" height="30"> FormDesk</b><span class="crumb" id="crumb"></span><button id="reset" class="ghost" hidden>Reset data</button><button id="logout" class="ghost" hidden>Sign out</button></header>
+<div id="shell">
+<nav id="side" hidden>
+<a href="#connect" data-tab="connect"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></i><b class="num">1</b><span>Connect form</span></a>
+<a href="#answers" data-tab="answers"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h7"/></svg></i><b class="num">2</b><span>Answers</span><em id="rowcount"></em></a>
+<a href="#run" data-tab="run"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg></i><b class="num">3</b><span>Run &amp; progress</span><em id="runbadge"></em></a>
+<p class="side-note">Always start with 1 response and check it in Google Forms.</p>
+</nav>
+<main>
+<div id="stepper" class="stepper" hidden><span data-s="connect">Connect</span><span data-s="answers">Answers</span><span data-s="run">Run</span></div>
+<div id="message" role="alert" hidden></div>
+<section id="login-view" class="panel login" hidden><img class="logo" src="/static/logo.svg" alt="FormDesk logo" width="64" height="64"><h1>Welcome to FormDesk</h1><p class="lead">Sign in to run your test batches.</p><label>Password<input id="password" type="password" autocomplete="current-password"></label><button id="login">Sign in</button></section>
+<div id="app-view" hidden>
+<section class="panel" data-panel="connect"><h1>Connect your form</h1><p class="lead">Use a copy of your form with <strong>TEST ONLY</strong> in its title. Follow these steps once:</p>
+<button id="stepsBtn" class="ghost" type="button" aria-expanded="false" aria-controls="guide">View steps</button>
+<div id="guide" class="guide" hidden><div class="guide-head"><b id="gTitle"></b><button id="gClose" class="ghost" type="button">Close</button></div><div class="guide-bar"><span id="gFill"></span></div><div id="gBody" class="guide-body" aria-live="polite"></div><div class="btns"><button id="gBack" class="ghost" type="button">← Back</button><button id="gNext" type="button">Next →</button></div></div>
+<label>Form link<input id="url" type="url" placeholder="https://docs.google.com/forms/d/e/…/viewform"></label>
+<label>Pre-filled link<textarea id="prefill" rows="3" placeholder="In Google Forms: ⋮ → Get pre-filled link. Answer every question, then paste the link here."></textarea></label>
+<details><summary>Paste questionnaire (optional, auto-fills answer options)</summary><label>Notes<textarea id="notes" rows="6" placeholder="Paste the questions and their options. Used only in this page."></textarea></label></details>
+<button id="import">Load questions →</button></section>
+<section class="panel" data-panel="answers" hidden><h1>Answers</h1><p class="lead">Choose how each answer is picked. Spelling must match the form's options exactly.</p>
+<label class="inline">Answers for all questions<select id="allkind"><option value="text">Same every time</option><option value="random">Different each time</option></select></label>
+<p class="hint">"Different each time" needs several options per question, one per line. Paste your questionnaire under Connect first and they are filled in for you.</p>
+<div id="rows"><div class="empty"><div class="empty-ic">☰</div><b>No questions yet</b><span>Load your pre-filled link in step 1 to see them here.</span></div></div>
+<details><summary>Advanced</summary><button id="add" class="ghost">+ Add a field by entry ID</button><div class="actions"><button id="save" class="ghost">Save settings</button><label class="file">Load settings<input id="load" type="file" accept=".json"></label></div></details>
+<button id="toRun">Continue to run →</button></section>
+<section class="panel" data-panel="run" hidden><h1>Run &amp; progress</h1>
+<div class="grid"><div>
+<label>Number of responses<input id="count" type="number" min="1" max="100" value="1"></label>
+<label class="check"><input id="owned" type="checkbox"> This is my TEST ONLY copy, not a real form.</label>
+<div class="btns"><button id="preview" class="ghost">Preview (nothing is sent)</button><button id="submit">Send responses →</button><button id="cancel" class="ghost">Stop</button></div>
+<details><summary>Settings</summary><label>Confirmation message on the form<input id="confirmation" value="Your response has been recorded."></label></details></div>
+<div class="status-card"><div class="status"><b id="status">Idle</b><span id="progress">0 / 0 done</span></div><progress id="bar" max="1" value="0"></progress><pre id="logs" aria-live="polite">Progress will appear here.</pre><a href="/api/log.csv">Download log</a></div></div></section>
+</div>
+<footer><p>Public, English-language Google Forms · Jobs reset when the server restarts</p><p>© <span id="year">2026</span> FormDesk. All rights reserved.</p></footer>
+</main></div>
+<script src="/static/app.js"></script></body></html>

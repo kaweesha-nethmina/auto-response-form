@@ -55,6 +55,11 @@ def home():
     return send_from_directory(FRONTEND, 'index.html')
 
 
+@app.get('/app')
+def workspace():
+    return send_from_directory(FRONTEND, 'app.html')
+
+
 @app.get('/favicon.ico')
 def favicon():
     return send_from_directory(os.path.join(FRONTEND, 'static'), 'logo.svg', mimetype='image/svg+xml')
