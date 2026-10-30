@@ -1,0 +1,36 @@
+{
+  "outputDirectory": "frontend",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://formdesk-qa.onrender.com/api/:path*"
+    },
+    {
+      "source": "/login",
+      "destination": "https://formdesk-qa.onrender.com/login"
+    },
+    {
+      "source": "/logout",
+      "destination": "https://formdesk-qa.onrender.com/logout"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'"
+        }
+      ]
+    }
+  ]
+}
