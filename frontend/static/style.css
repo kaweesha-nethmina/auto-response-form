@@ -105,3 +105,4 @@ progress{-webkit-appearance:none;appearance:none;background:#2c2c2c;border:0;ove
 footer{margin-top:36px}
 @media(max-width:700px){.stepper{display:none}#side a i{width:28px;height:28px}#side a.on{box-shadow:none}.panel{box-shadow:0 4px 16px rgba(0,0,0,.07)}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.brand{display:flex;align-items:center;gap:10px}.brand img{border-radius:8px;display:block}img.logo{display:block;width:64px;height:64px;margin:6px auto 14px;border-radius:16px;box-shadow:0 8px 20px rgba(0,0,0,.25);background:none}

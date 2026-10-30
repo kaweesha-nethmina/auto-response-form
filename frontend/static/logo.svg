@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="FormDesk">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ecc94b"/><stop offset=".55" stop-color="#c9a227"/><stop offset="1" stop-color="#a98511"/></linearGradient></defs>
+<rect width="64" height="64" rx="15" fill="#111"/>
+<rect x="15" y="12" width="30" height="40" rx="5" fill="none" stroke="url(#g)" stroke-width="4"/>
+<path d="M22 24h16M22 32h16M22 40h8" stroke="url(#g)" stroke-width="4" stroke-linecap="round"/>
+<circle cx="45" cy="44" r="11" fill="url(#g)" stroke="#111" stroke-width="3"/>
+<path d="M40 44l4 4 7-8" fill="none" stroke="#111" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
