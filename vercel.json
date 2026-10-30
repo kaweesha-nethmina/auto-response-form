@@ -2,9 +2,9 @@
   "outputDirectory": "frontend",
   "buildCommand": "",
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://RENDER_SERVICE_URL/api/:path*" },
-    { "source": "/login", "destination": "https://RENDER_SERVICE_URL/login" },
-    { "source": "/logout", "destination": "https://RENDER_SERVICE_URL/logout" }
+    { "source": "/api/:path*", "destination": "https://formdesk-qa.onrender.com/api/:path*" },
+    { "source": "/login", "destination": "https://formdesk-qa.onrender.com/login" },
+    { "source": "/logout", "destination": "https://formdesk-qa.onrender.com/logout" }
   ],
   "headers": [
     { "source": "/(.*)", "headers": [
