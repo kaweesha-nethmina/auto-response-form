@@ -1,5 +1,5 @@
 import re
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, parse_qs
 from playwright.sync_api import sync_playwright
 
 
@@ -24,6 +24,8 @@ def run_browser(urls, submit, confirmation, log, cancelled):
                     if not re.search(r'\bTEST ONLY\b', heading.inner_text(), re.I):
                         raise RuntimeError('Respondent-visible form title must contain TEST ONLY. Use a disposable copy.')
                     log(f'Response {number}/{count}: opened test form.')
+                    picked = '; '.join(f"{k.replace('entry.', '')}={' | '.join(v)[:40]}" for k, v in parse_qs(urlsplit(urls[number - 1]).query).items())
+                    log(f'Response {number}: answers {picked}')
                     for section in range(1, 51):
                         if cancelled.is_set():
                             return 'cancelled'

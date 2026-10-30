@@ -42,7 +42,10 @@ bind('toRun',()=>{document.querySelector('[data-tab=answers]').classList.add('do
 bind('add',()=>makeRow());
 bind('save',()=>{const u=URL.createObjectURL(new Blob([JSON.stringify(config(),null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=u;a.download='formdesk-config.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);});
 if($('load')) $('load').onchange=async e=>{try{const f=e.target.files[0];if(!f)return;if(f.size>2000000)throw Error('File too large.');const d=JSON.parse(await f.text());if(!Array.isArray(d.rows)||d.rows.length>300||d.rows.some(r=>!r||typeof r.id!=='string'||!Array.isArray(r.answers)||r.answers.some(a=>typeof a!=='string')))throw Error('Invalid configuration.');for(const key of ['url','prefill','notes','count','confirmation']) if(d[key]!==undefined)$(key).value=d[key];$('rows').replaceChildren();d.rows.forEach(makeRow);$('owned').checked=false;message('Configuration loaded. Review before running.');}catch(err){message(err.message);}};
-async function start(mode){await api('/api/start',{...config(),mode,owned:$('owned').checked});await poll();}
+async function start(mode){
+  const thin=rows().filter(r=>r.mode==='random'&&r.answers.length<2).length;
+  if(thin&&!confirm(`${thin} question(s) are set to "Different each time" but have only one option, so they will repeat the same answer. Continue anyway?`))return;
+await api('/api/start',{...config(),mode,owned:$('owned').checked});await poll();}
 bind('preview',()=>start('preview'));bind('submit',()=>start('submit'));bind('cancel',()=>api('/api/cancel',{}));
 async function poll(){if(!signedIn)return;try{const d=await api('/api/status');$('status').textContent=d.status;$('runbadge').textContent=d.status==='running'?'●':'';$('progress').textContent=`${d.completed} / ${d.total} done`;$('bar').max=Math.max(1,d.total);$('bar').value=d.completed;$('logs').textContent=d.logs.map(l=>`${l.time.slice(11,19)}  ${l.message}`).join('\n')||'Your job events will appear here.';for(const id of ['submit','preview'])$(id).disabled=d.status==='running';$('cancel').disabled=d.status!=='running';}catch(e){message(e.message);}}
 

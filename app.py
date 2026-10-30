@@ -47,7 +47,7 @@ def headers(r):
 
 @app.get('/health')
 def health():
-    return {'ok': True}
+    return {'ok': True, 'version': (os.environ.get('RENDER_GIT_COMMIT') or 'local')[:7], 'random_answers': True}
 
 
 @app.get('/')
