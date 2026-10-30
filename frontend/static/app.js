@@ -43,6 +43,35 @@ function resetAll() {
 }
 ['input','change'].forEach(ev => document.addEventListener(ev, e => { if(e.target.closest('#app-view')) save(); }));
 document.addEventListener('click', e => { if(e.target.closest('#app-view .remove')) setTimeout(() => { updateCount(); save(); }); });
+
+const GUIDE = [
+  ['Open your form', 'Go to <b>Google Forms</b> and open your form in the editor (not the live form).'],
+  ['Make a copy', 'Click the <b>3 dots (⋮)</b> in the top right corner and choose <b>Make a copy</b>.'],
+  ['Rename the copy', 'Open the copy and add <b>- TEST ONLY</b> to the end of its title.<br>Example: <i>My Feedback Form - TEST ONLY</i>'],
+  ['Publish it', 'Click <b>Publish</b> so anyone can respond. Turn off sign-in and "limit to 1 response".'],
+  ['Copy the responder link', 'Copy the <b>responder link</b> (it ends in <code>/viewform</code>) and paste it into <b>Form link</b> below.'],
+  ['Get the pre-filled form', 'Click the <b>3 dots (⋮)</b> in the top right again and choose <b>Get pre-filled form</b>.'],
+  ['Fill in the form', 'Fill in the form with any sample answers. Answer <b>every</b> question, then click <b>Get link</b> and copy the link.'],
+  ['Load your questions', 'Paste that link into <b>Pre-filled link</b> below and click <b>Load questions</b>.']
+];
+let gi = 0;
+function renderGuide() {
+  const [title, body] = GUIDE[gi];
+  $('gTitle').textContent = `Step ${gi + 1} of ${GUIDE.length}`;
+  $('gBody').innerHTML = `<h3>${title}</h3><p>${body}</p>`;
+  $('gFill').style.width = `${(gi + 1) / GUIDE.length * 100}%`;
+  $('gBack').disabled = gi === 0;
+  $('gNext').textContent = gi === GUIDE.length - 1 ? 'Done ✓' : 'Next →';
+}
+function toggleGuide(open) {
+  $('guide').hidden = !open; $('stepsBtn').setAttribute('aria-expanded', String(open));
+  $('stepsBtn').textContent = open ? 'Hide steps' : 'View steps';
+  if(open) { gi = 0; renderGuide(); }
+}
+$('stepsBtn').onclick = () => toggleGuide($('guide').hidden);
+$('gClose').onclick = () => toggleGuide(false);
+$('gBack').onclick = () => { if(gi > 0) { gi--; renderGuide(); } };
+$('gNext').onclick = () => { if(gi < GUIDE.length - 1) { gi++; renderGuide(); } else toggleGuide(false); };
 async function api(path, data) {
   const response = await fetch(path, data === undefined ? {} : {method:'POST', headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify(data)});
   const result = await response.json();
