@@ -1,6 +1,7 @@
 const $ = id => document.getElementById(id);
 let csrf = '', signedIn = false;
 function message(text) { $('message').textContent = text; $('message').hidden = !text; }
+$('year').textContent = new Date().getFullYear();
 const tabs = ['connect','answers','run'];
 let currentTab = 'connect';
 function show(tab) {
