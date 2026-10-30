@@ -24,10 +24,15 @@ function snapshot() {
     done:[...document.querySelectorAll('#side a.done')].map(a => a.dataset.tab),
     rows:(r => [...document.querySelectorAll('.entry')].map((el, i) => ({...r[i], options:JSON.parse(el.dataset.options || '[]'), type:el.dataset.type === '' ? undefined : Number(el.dataset.type)})))(rows())};
 }
-function save() { if(!signedIn) return; try { localStorage.setItem(KEY, JSON.stringify(snapshot())); } catch(e) {} }
+function save() { if(!signedIn) return; try { sessionStorage.setItem(KEY, JSON.stringify(snapshot())); } catch(e) {} }
 function updateCount() { $('rowcount').textContent = document.querySelectorAll('.entry').length || ''; }
 function restore() {
-  let s; try { s = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch(e) {}
+  let s;
+  try {
+    localStorage.removeItem(KEY);
+    if(sessionStorage.getItem(KEY + ':done')) { sessionStorage.removeItem(KEY); sessionStorage.removeItem(KEY + ':done'); return null; }
+    s = JSON.parse(sessionStorage.getItem(KEY) || 'null');
+  } catch(e) {}
   if(!s || typeof s !== 'object') return null;
   for(const k of ['url','prefill','notes','count','confirmation','allkind']) if(typeof s[k] === 'string') $(k).value = s[k];
   if(Array.isArray(s.rows) && s.rows.length) { $('rows').replaceChildren(); s.rows.forEach(makeRow); }
@@ -35,9 +40,9 @@ function restore() {
   updateCount();
   return s.tab;
 }
-function resetAll() {
-  if(!confirm('Clear the links, answers and settings saved in this browser?')) return;
-  try { localStorage.removeItem(KEY); } catch(e) {}
+function resetAll(ask = true) {
+  if(ask && !confirm('Clear the links, answers and settings saved in this browser?')) return;
+  try { sessionStorage.removeItem(KEY); sessionStorage.removeItem(KEY + ':done'); } catch(e) {}
   for(const id of ['url','prefill','notes']) $(id).value = '';
   $('count').value = 1; $('confirmation').value = DEFAULT_CONFIRMATION; $('allkind').value = 'text'; $('owned').checked = false;
   $('rows').innerHTML = EMPTY_ROWS;
@@ -84,7 +89,7 @@ async function api(path, data) {
 function bind(id, fn) { if($(id)) $(id).onclick = async () => {try {message('');await fn();}catch(e){message(e.message);}}; }
 bind('login',async()=>{await api('/login',{password:$('password').value});location.reload();});
 if($('password')) $('password').onkeydown=e=>{if(e.key==='Enter') $('login').click();};
-bind('reset',resetAll);
+bind('reset',()=>resetAll());
 bind('logout',async()=>{await api('/logout',{});location.reload();});
 function makeRow(row={id:'entry.', label:'', answers:['']}) {
   const el = document.createElement('div');el.className='entry';
@@ -119,7 +124,10 @@ async function start(mode){
   if(thin&&!confirm(`${thin} question(s) are set to "Different each time" but have only one option, so they will repeat the same answer. Continue anyway?`))return;
 await api('/api/start',{...config(),mode,owned:$('owned').checked});await poll();}
 bind('preview',()=>start('preview'));bind('submit',()=>start('submit'));bind('cancel',()=>api('/api/cancel',{}));
-async function poll(){if(!signedIn)return;try{const d=await api('/api/status');$('status').textContent=d.status;$('status').dataset.state=d.status;$('runbadge').textContent=d.status==='running'?'●':'';$('progress').textContent=`${d.completed} / ${d.total} done`;$('bar').max=Math.max(1,d.total);$('bar').value=d.completed;$('logs').textContent=d.logs.map(l=>`${l.time.slice(11,19)}  ${l.message}`).join('\n')||'Your job events will appear here.';for(const id of ['submit','preview'])$(id).disabled=d.status==='running';$('cancel').disabled=d.status!=='running';}catch(e){message(e.message);}}
+let lastStatus = null;
+async function poll(){if(!signedIn)return;try{const d=await api('/api/status');
+if(lastStatus==='running'&&d.status!=='running'&&d.status!=='idle'){try{sessionStorage.setItem(KEY+':done','1');}catch(e){}}
+lastStatus=d.status;$('status').textContent=d.status;$('status').dataset.state=d.status;$('runbadge').textContent=d.status==='running'?'●':'';$('progress').textContent=`${d.completed} / ${d.total} done`;$('bar').max=Math.max(1,d.total);$('bar').value=d.completed;$('logs').textContent=d.logs.map(l=>`${l.time.slice(11,19)}  ${l.message}`).join('\n')||'Your job events will appear here.';for(const id of ['submit','preview'])$(id).disabled=d.status==='running';$('cancel').disabled=d.status!=='running';}catch(e){message(e.message);}}
 
 (async()=>{
   try {
@@ -134,3 +142,5 @@ async function poll(){if(!signedIn)return;try{const d=await api('/api/status');$
   $('logout').hidden = !signedIn;
   if(signedIn){poll();setInterval(poll,2000);}
 })();
+
+window.addEventListener('pageshow', e => { if(e.persisted) { try { if(sessionStorage.getItem(KEY + ':done')) location.reload(); } catch(x) {} } });
